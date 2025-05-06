@@ -1,0 +1,14 @@
+# Ignore environment variables and config
+.env
+*.env
+*.log
+
+# Ignore Python virtual environment
+venv/
+
+# Ignore compiled files
+__pycache__/
+*.pyc
+
+chatbot.db
+

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Groq Chatbot</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav id="navbar">
+        <h2>Groq Chatbot</h2>
+        <button onclick="startNewConversation()">New Conversation</button>
+    </nav>
+    
+    <h1>Groq Chatbot</h1>
+
+    <div id="chat-box"></div>
+    <button onclick="clearHistory()">Clear Conversation</button>
+    <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" required>
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        const form = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const chatBox = document.getElementById('chat-box');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const message = userInput.value.trim();
+            if (message === "") return;
+
+            // Add user message to chat
+            chatBox.innerHTML += `<div class="user-message"><strong>You:</strong> ${message}</div>`;
+            userInput.value = "";
+
+            // Send message to server
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            // Add AI response to chat
+            //chatBox.innerHTML += `<div class="bot-message"><strong>Bot:</strong> ${data.response}</div>`;
+            // Replace newlines (\n) with <br> so HTML understands it
+            const formattedResponse = data.response.replace(/\n/g, "<br>");
+            chatBox.innerHTML += `<div class="bot-message"><strong>Bot:</strong> ${formattedResponse}</div>`;
+
+
+            // Scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // ✅ Focus back on the input field
+            userInput.focus();
+
+            window.onload = () => {
+            userInput.focus();
+            };
+
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+    fetch('/history')
+    .then(response => response.json())
+    .then(data => {
+        const chatBox = document.getElementById('chat-box');
+
+        data.forEach(chat => {
+            const messageDiv = document.createElement('div');
+
+            // 🔥 Fix newlines: replace \n with <br>
+            const formattedMessage = chat.message.replace(/\n/g, "<br>");
+
+            // Different style for user and bot
+            if (chat.sender === "user") {
+                messageDiv.classList.add('user-message');
+                messageDiv.innerHTML = `<strong>You:</strong> ${formattedMessage}`;
+            } else {
+                messageDiv.classList.add('bot-message');
+                messageDiv.innerHTML = `<strong>Bot:</strong> ${formattedMessage}`;
+            }
+
+            chatBox.appendChild(messageDiv);
+        });
+
+        // Scroll to bottom after loading history
+        chatBox.scrollTop = chatBox.scrollHeight;
+    })
+    .catch(error => console.error('Error loading history:', error));
+});
+
+
+            function clearHistory() {
+        fetch('/clear_history', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            location.reload(); // Reload page to refresh chat
+        })
+        .catch(error => console.error('Error clearing history:', error));
+    }
+
+    function startNewConversation() {
+    fetch('/clear_history', { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+        // Clear chatbox
+        chatBox.innerHTML = "";
+
+        // Optionally, you can add a small welcome message
+        chatBox.innerHTML = `<div class="bot-message"><strong>Bot:</strong> Hello! How can I assist you today?</div>`;
+
+        // Focus on input field
+        userInput.focus();
+    })
+    .catch(error => console.error('Error starting new conversation:', error));
+}
+
+
+
+    </script>
+</body>
+</html>
